@@ -5,5 +5,8 @@ app:
     email: admin@test.local
     password: admin-test-pass
     name: Test Admin
+  crypto:
+    # test-only key (32 bytes of 0x01..0x20)
+    key: AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=
   uploads:
     dir: target/test-uploads

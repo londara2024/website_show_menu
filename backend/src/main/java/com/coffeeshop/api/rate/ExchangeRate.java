@@ -1,6 +1,8 @@
 package com.coffeeshop.api.rate;
 
+import com.coffeeshop.api.crypto.EncryptedStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -22,6 +24,8 @@ public class ExchangeRate {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** Admin email, stored encrypted (Flyway V5). */
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(name = "updated_by")
     private String updatedBy;
 

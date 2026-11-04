@@ -29,6 +29,13 @@ Spring Boot 4.1 on Java 17. See `README.md` for the endpoints and how to run it.
 - Tokens come from `TokenService`; the `roles` claim maps to `ROLE_*` authorities in `SecurityConfig`.
 - Self-registration always creates a `CUSTOMER`. Admins come only from `AdminBootstrap` (env vars) or a direct DB change. Never put passwords or hashes in migrations.
 
+## Encryption at rest
+
+- Personal data columns use `@Convert(converter = EncryptedStringConverter.class)` (AES-256-GCM via `crypto/FieldCipher`). Put any new personal or sensitive column under it. Its DB column must be `varchar(1024)` or larger, because ciphertext is longer than the plain value.
+- An encrypted column can't be searched with SQL `where`/`like`/`lower()`. For lookups, add a blind index (`FieldCipher.emailIndex`-style HMAC) column, as `users.email_hash` does: `UserEmailIndexListener` keeps it in step, and `UserRepositoryCustomImpl.findByEmail` queries it.
+- `V5__EncryptPersonalData` is a Java migration (a Spring bean, because it needs the key). Never change it. New data changes go in `V6+`.
+- Tests use a fixed key from `application-test.yml`. `ApiIT` checks the raw DB contains no plain emails or names, and `EncryptionMigrationIT` runs V1–V4 → plain rows → V5.
+
 ## API docs (springdoc-openapi)
 
 - `springdoc-openapi-starter-webmvc-ui` 3.x is the line for Spring Boot 4; 2.x is for Boot 3 and won't work.
@@ -55,6 +62,11 @@ Spring Boot 4.1 on Java 17. See `README.md` for the endpoints and how to run it.
 
 - The API listens on **8080** (`server.port`, Dockerfile `EXPOSE` and health check, compose port). The website calls it at `http://backend:8080` inside Docker. Change all of them together.
 - PostgreSQL is **18** (compose and Testcontainers). Its data volume is mounted at `/var/lib/postgresql`, not `/data`. A major-version change needs dump → new volume → restore; see `../DEPLOY.md`.
+
+## Profiles
+
+- `application.yml`: the base settings, all from env vars. `application-dev.yml`: local `spring-boot:run` (dev JWT secret and admin; no crypto key, so export the one from `.env`). `application-prod.yml`: the server (`SPRING_PROFILES_ACTIVE=prod`). Never put secrets in any of them.
+- Hikari's durations (`connection-timeout`, …) are plain milliseconds, not `10s`. A wrong value stops the app at startup.
 
 ## Docker
 

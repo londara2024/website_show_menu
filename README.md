@@ -13,7 +13,7 @@ A Khmer coffee-shop menu website with an admin dashboard.
 
 ```bash
 cd backend
-cp .env.example .env           # set DB_PASSWORD, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
+cp .env.example .env           # set DB_PASSWORD, JWT_SECRET, DATA_ENCRYPTION_KEY, ADMIN_EMAIL, ADMIN_PASSWORD
 docker compose up -d --build   # PostgreSQL 18 + API on :8080, creates the "coffeeshop" network
 
 cd ../frontend

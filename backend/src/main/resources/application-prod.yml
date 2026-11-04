@@ -1,0 +1,43 @@
+# Production settings, on top of application.yml. Enable with SPRING_PROFILES_ACTIVE=prod
+# (backend/.env on the server). Secrets still come only from the environment; nothing here has a default.
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      connection-timeout: 10000   # ms
+  jpa:
+    show-sql: false
+  flyway:
+    # Never allow `flyway clean` (drops every table) against production.
+    clean-disabled: true
+    validate-on-migrate: true
+  lifecycle:
+    # Let in-flight requests finish on `docker compose down` / redeploy.
+    timeout-per-shutdown-phase: 20s
+
+server:
+  shutdown: graceful
+  # Behind Caddy/Nginx: trust X-Forwarded-* so redirects and logs see the real client.
+  forward-headers-strategy: native
+  compression:
+    enabled: true
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  info:
+    env:
+      enabled: false
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN

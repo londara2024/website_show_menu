@@ -11,7 +11,7 @@ REST API behind the CoffeeShop website (`../frontend`). It serves the public men
 Everything for the backend lives in this folder: `Dockerfile`, `docker-compose.yml` (PostgreSQL + API) and `.env`.
 
 ```bash
-cp .env.example .env          # then set DB_PASSWORD, JWT_SECRET, ADMIN_PASSWORD
+cp .env.example .env          # then set DB_PASSWORD, JWT_SECRET, DATA_ENCRYPTION_KEY, ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
@@ -28,6 +28,7 @@ Start only the database from the compose file, then run the app with the `dev` p
 
 ```bash
 docker compose up -d db
+export DATA_ENCRYPTION_KEY="$(grep '^DATA_ENCRYPTION_KEY=' .env | cut -d= -f2-)"   # same key as the Docker API
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
@@ -39,7 +40,9 @@ All settings come from environment variables (see `src/main/resources/applicatio
 | --- | --- | --- |
 | `DB_URL` / `DB_USER` / `DB_PASSWORD` | `jdbc:postgresql://localhost:5433/coffeeshop` / `coffeeshop` / `coffeeshop` | |
 | `JWT_SECRET` | — (required) | HS256 key, at least 32 characters. The app refuses to start without it. Generate one with `openssl rand -base64 48`. |
+| `DATA_ENCRYPTION_KEY` | — (required) | AES-256 key for personal data in the database: 32 bytes, base64. Generate one with `openssl rand -base64 32`. **Back it up.** Without it, emails and names can never be decrypted. |
 | `JWT_TTL` | `8h` | Token lifetime |
+| `SPRING_PROFILES_ACTIVE` | — | `prod` on the server ([`application-prod.yml`](src/main/resources/application-prod.yml)), `dev` for `./mvnw spring-boot:run`. Empty for local Docker. |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` | — | The first admin, created on startup if that email doesn't exist yet. An existing account is never changed. |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Comma-separated. The website calls the API server-to-server, so this only matters for browser clients. |
 | `SWAGGER_ENABLED` | `true` | Serves Swagger UI and `/v3/api-docs`. Set `false` to hide both (they return 404). |
@@ -163,7 +166,7 @@ Flyway migrations live in `src/main/resources/db/migration`, and Hibernate only 
 - `V1__create_schema.sql`: tables `users`, `products`, `product_categories`, `product_sizes`, `add_ons`.
 - `V2__seed_menu.sql`: the original 8 drinks and 9 add-ons, generated from `../frontend/src/lib/menu-data.ts`.
 
-To change the schema, add a new `V5__…sql`. Never edit a migration that has already run.
+To change the schema, add a new `V6__…sql`. Never edit a migration that has already run.
 
 Reset all data with `docker compose down -v`. That deletes the database volume; Flyway and the admin bootstrap rebuild everything on the next start.
 
@@ -204,5 +207,10 @@ The two kinds are split by file name: `*Test.java` runs with Surefire (`test`), 
 ## Security notes
 
 - Passwords are hashed with BCrypt. Login takes the same time whether or not the email exists.
+- **Encryption at rest:** `users.email`, `users.full_name` and `exchange_rate.updated_by` are stored as AES-256-GCM ciphertext (`v1:<base64>`), with a random IV per value. Tampered values are rejected. The API decrypts them automatically (`EncryptedStringConverter`), so JSON responses are unchanged.
+- Login finds the user through `users.email_hash`, an HMAC-SHA256 "blind index" of the lower-cased email. It's unique, so duplicate emails are still refused.
+- Both sub-keys are derived from `DATA_ENCRYPTION_KEY`. A database dump or a stolen disk, without the key, shows no readable email or name. Keep the key out of the database server's backups.
+- Menu data (products, add-ons, QR codes) is public on the website anyway, so it is not encrypted.
+- Key rotation isn't automated yet. The `v1:` prefix is there so a future version can re-encrypt the data under a new key.
 - Tokens are stateless HS256 JWTs. Rotating `JWT_SECRET` logs everyone out.
 - No refresh tokens, login rate limiting or password reset yet. Put the API behind a reverse proxy with rate limiting before exposing `/api/auth/login` to the internet.

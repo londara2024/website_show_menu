@@ -75,8 +75,10 @@ Edit `.env`:
 
 | Variable | Production value |
 | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | `prod`. Loads `application-prod.yml`: graceful shutdown, trusts the proxy's `X-Forwarded-*`, gzip, no error details or health details, and `flyway clean` is blocked. |
 | `DB_PASSWORD` | `openssl rand -base64 24` |
 | `JWT_SECRET` | `openssl rand -base64 48` (at least 32 characters; changing it later logs everyone out) |
+| `DATA_ENCRYPTION_KEY` | `openssl rand -base64 32`. It encrypts emails and names in the database. **Store a copy in a password manager.** If it's lost, those columns can't be decrypted, even from backups. Never change it on a running system. |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | The first admin, created on first start only. Use a strong password. |
 | `PUBLIC_URL` | `https://coffeeshop.example.com` (the website's address, used for CORS) |
 | `SWAGGER_ENABLED` | `false`, unless you want the API docs public |
@@ -177,7 +179,7 @@ docker run --rm -v coffeeshop-backend_uploads:/data -v "$PWD":/backup alpine \
   tar czf /backup/uploads-$(date +%F).tar.gz -C /data .
 ```
 
-Run these from cron (e.g. nightly) and copy the files off the server. The dumps contain user accounts with password hashes, so store them privately.
+Run these from cron (e.g. nightly) and copy the files off the server. Emails and names in the dumps are encrypted, and passwords are BCrypt hashes. A restore needs the same `DATA_ENCRYPTION_KEY`, so keep the key safe, but **not** next to the dumps.
 
 ---
 
@@ -243,6 +245,7 @@ Health checks: the API at `GET /actuator/health/readiness`, the website at `GET 
 ## Security checklist
 
 - [ ] `JWT_SECRET`, `DB_PASSWORD` and `ADMIN_PASSWORD` are long and random, and unique to this server.
+- [ ] `DATA_ENCRYPTION_KEY` is random (`openssl rand -base64 32`) and backed up somewhere other than the database backups.
 - [ ] `backend/.env` is `chmod 600` and not in git.
 - [ ] Only 22, 80 and 443 are open; `BACKEND_PORT` and `PORT` are bound to `127.0.0.1` behind the proxy.
 - [ ] The site is served over HTTPS (`COOKIE_SECURE=true`).
@@ -258,6 +261,8 @@ Known gaps: there's no password-reset or change-password screen yet. To change t
 | --- | --- |
 | `network coffeeshop declared as external, but could not be found` | Start the backend first; it creates the network. |
 | API exits with `JWT_SECRET … must be at least 32 characters` | Set `JWT_SECRET` in `backend/.env`. |
+| API exits with `DATA_ENCRYPTION_KEY must be 32 random bytes` | Set `DATA_ENCRYPTION_KEY` in `backend/.env` (`openssl rand -base64 32`). |
+| Login fails with 500 and the logs say `Cannot decrypt a database value` | `DATA_ENCRYPTION_KEY` isn't the key the data was encrypted with. Restore the original key. |
 | `db` keeps restarting after an image change | The data volume is from another PostgreSQL major version. See "Upgrading PostgreSQL". |
 | Menu says "can't load the menu" (មិនអាចផ្ទុកម៉ឺនុយបានទេ) | The API is down or unhealthy: `cd backend && docker compose ps`, then check the logs. |
 | Login works but you're sent straight back to `/login` | The site is on plain HTTP while `COOKIE_SECURE=true`. Use HTTPS, or `COOKIE_SECURE=false` only on a trusted LAN. |

@@ -7,3 +7,5 @@ app:
     email: admin@coffeeshop.local
     password: admin12345
     name: Dev Admin
+  # No dev default on purpose: the Docker database is encrypted with the key in backend/.env,
+  # so export that same DATA_ENCRYPTION_KEY before ./mvnw spring-boot:run (see README).

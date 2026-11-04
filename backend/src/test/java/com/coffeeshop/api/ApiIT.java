@@ -13,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.mock.web.MockMultipartFile;
@@ -33,6 +34,9 @@ class ApiIT {
 
     @Autowired
     MockMvcTester mvc;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     // ---------- helpers ----------
 
@@ -437,5 +441,38 @@ class ApiIT {
 
         assertThat(delete("/api/admin/qr-codes/" + id, token)).hasStatus(204);
         assertThat(get("/api/admin/qr-codes/" + id, token)).hasStatus(404);
+    }
+
+    // ---------- encryption at rest ----------
+
+    @Test
+    void personalDataIsEncryptedInTheDatabaseButPlainInTheApi() {
+        String email = "secure-" + UUID.randomUUID().toString().substring(0, 8) + "@test.local";
+        assertThat(post("/api/auth/register",
+                "{\"fullName\":\"ចាន់ សុភា\",\"email\":\"%s\",\"password\":\"secret123\"}".formatted(email), null))
+                .hasStatus(201);
+
+        // What a stolen database dump would show: no readable email or name anywhere.
+        List<Map<String, Object>> rows = jdbc.queryForList("select email, full_name, email_hash from users");
+        assertThat(rows).isNotEmpty().allSatisfy(r -> {
+            assertThat((String) r.get("email")).startsWith("v1:").doesNotContain("@");
+            assertThat((String) r.get("full_name")).startsWith("v1:");
+            assertThat((String) r.get("email_hash")).hasSize(64);
+        });
+        assertThat(rows.toString()).doesNotContain(email).doesNotContain("ចាន់ សុភា");
+
+        // The API decrypts transparently, and login stays case-insensitive.
+        String token = login(email.toUpperCase(java.util.Locale.ROOT), "secret123");
+        MvcTestResult me = get("/api/auth/me", token);
+        assertThat((String) JsonPath.read(body(me), "$.email")).isEqualTo(email);
+        assertThat((String) JsonPath.read(body(me), "$.fullName")).isEqualTo("ចាន់ សុភា");
+
+        // The exchange-rate author is encrypted too.
+        String admin = adminToken();
+        int original = JsonPath.read(body(get("/api/exchange-rate", null)), "$.khrPerUsd");
+        assertThat(put("/api/admin/exchange-rate", "{\"khrPerUsd\":" + original + "}", admin)).hasStatusOk();
+        assertThat(jdbc.queryForObject("select updated_by from exchange_rate", String.class))
+                .startsWith("v1:").doesNotContain(ADMIN_EMAIL);
+        assertThat((String) JsonPath.read(body(get("/api/admin/exchange-rate", admin)), "$.updatedBy")).isEqualTo(ADMIN_EMAIL);
     }
 }
