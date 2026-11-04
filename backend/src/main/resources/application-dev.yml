@@ -1,0 +1,9 @@
+# Local development only: ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+# Never use these values outside your own machine.
+app:
+  jwt:
+    secret: dev-only-secret-change-me-0123456789abcdef
+  admin:
+    email: admin@coffeeshop.local
+    password: admin12345
+    name: Dev Admin

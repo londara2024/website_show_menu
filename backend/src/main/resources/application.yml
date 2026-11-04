@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: coffeeshop-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/coffeeshop}
+    username: ${DB_USER:coffeeshop}
+    password: ${DB_PASSWORD:coffeeshop}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Schema is owned by Flyway (src/main/resources/db/migration); Hibernate only checks it.
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      # Hard ceiling for the request; ImageStorageService enforces app.uploads.max-size with a Khmer message.
+      max-file-size: 6MB
+      max-request-size: 7MB
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+
+app:
+  jwt:
+    # HS256 signing key, at least 32 characters. Required — the app refuses to start without it.
+    secret: ${JWT_SECRET:}
+    issuer: coffeeshop-api
+    ttl: ${JWT_TTL:8h}
+  admin:
+    # First admin, created on startup if no user with this email exists. Leave blank to skip.
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+    name: ${ADMIN_NAME:Admin}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  uploads:
+    # Where uploaded product images are stored (a Docker volume in docker-compose.yml).
+    dir: ${UPLOAD_DIR:./uploads}
+    # Largest accepted image. Keep spring.servlet.multipart limits a little above it.
+    max-size: ${UPLOAD_MAX_SIZE:5MB}
+
+springdoc:
+  api-docs:
+    # OpenAPI JSON at /v3/api-docs. Set SWAGGER_ENABLED=false to hide the docs (e.g. in production).
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /swagger-ui.html
+    # Keep the pasted JWT across page reloads.
+    persist-authorization: true
+    operations-sorter: method
+    display-request-duration: true
+  default-produces-media-type: application/json
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true

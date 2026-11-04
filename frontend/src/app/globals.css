@@ -1,0 +1,195 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* "Artisanal Editorial Roast" design tokens (see stitch_coffeeshop_menu_showcase/DESIGN.md) */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-roast: var(--roast);
+  --color-on-roast: var(--on-roast);
+  --color-roast-container: var(--roast-container);
+  --color-cocoa: var(--cocoa);
+  --color-on-cocoa: var(--on-cocoa);
+  --color-cocoa-container: var(--cocoa-container);
+  --color-on-cocoa-container: var(--on-cocoa-container);
+  --color-honey: var(--honey);
+  --color-honey-fixed: var(--honey-fixed);
+  --color-inverse-roast: #fdb793;
+
+  --shadow-card: var(--elev-1);
+  --shadow-card-hover: var(--elev-2);
+  --shadow-panel: var(--elev-3);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-khmer);
+  --font-heading: var(--font-khmer);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 1.75);
+  --radius-3xl: calc(var(--radius) * 2.25);
+  --radius-4xl: calc(var(--radius) * 2.75);
+}
+
+/* Light — warm cream canvas */
+:root {
+  --surface: #fcf9f4;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f6f3ee;
+  --surface-container: #f0ede9;
+  --surface-container-high: #ebe8e3;
+  --surface-container-highest: #e5e2dd;
+  --on-surface: #1c1c19;
+  --on-surface-variant: #52443d;
+  --inverse-surface: #31302d;
+  --inverse-on-surface: #f3f0eb;
+  --outline: #84746c;
+  --outline-variant: #d7c2ba;
+  --roast: #54280f;
+  --on-roast: #ffffff;
+  --roast-container: #6f3e23;
+  --cocoa: #785749;
+  --on-cocoa: #ffffff;
+  --cocoa-container: #fed0bf;
+  --on-cocoa-container: #79574a;
+  --honey: #4b2e00;
+  --honey-fixed: #ffddb6;
+  --elev-1: 0 4px 20px -2px rgba(59, 33, 22, 0.05);
+  --elev-2: 0 12px 28px -4px rgba(59, 33, 22, 0.09);
+  --elev-3: 0 20px 40px -8px rgba(59, 33, 22, 0.16);
+
+  --background: var(--surface);
+  --foreground: var(--on-surface);
+  --card: var(--surface-container-lowest);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container-lowest);
+  --popover-foreground: var(--on-surface);
+  --primary: var(--roast);
+  --primary-foreground: var(--on-roast);
+  --secondary: var(--surface-container);
+  --secondary-foreground: var(--on-surface-variant);
+  --muted: var(--surface-container-low);
+  --muted-foreground: var(--cocoa);
+  --accent: var(--surface-container-high);
+  --accent-foreground: var(--on-surface);
+  --destructive: #ba1a1a;
+  --border: rgba(111, 62, 35, 0.1);
+  --input: #d7c2ba;
+  --ring: rgba(111, 62, 35, 0.35);
+  --radius: 1rem;
+}
+
+/* Dark — roasted espresso canvas */
+.dark {
+  --surface: #17120f;
+  --surface-container-lowest: #211a16;
+  --surface-container-low: #261f1a;
+  --surface-container: #2e2520;
+  --surface-container-high: #382e28;
+  --surface-container-highest: #433831;
+  --on-surface: #eee2da;
+  --on-surface-variant: #d7c2ba;
+  --inverse-surface: #0f0b09;
+  --inverse-on-surface: #f3f0eb;
+  --outline: #a08d84;
+  --outline-variant: #52443d;
+  --roast: #fdb793;
+  --on-roast: #341100;
+  --roast-container: #f0ab88;
+  --cocoa: #e9bdac;
+  --on-cocoa: #2d150b;
+  --cocoa-container: #5e3f33;
+  --on-cocoa-container: #ffdbcd;
+  --honey: #f4bc75;
+  --honey-fixed: #643f00;
+  --elev-1: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  --elev-2: 0 12px 28px -4px rgba(0, 0, 0, 0.5);
+  --elev-3: 0 20px 40px -8px rgba(0, 0, 0, 0.6);
+
+  --destructive: #ffb4ab;
+  --border: rgba(253, 183, 147, 0.1);
+  --input: #52443d;
+  --ring: rgba(253, 183, 147, 0.4);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Khmer stacks vowels and subscript consonants above and below the
+       baseline, so it needs more line height than Latin text. */
+    line-height: 1.7;
+  }
+  /* Portalled UI (Select, DropdownMenu) mounts on <body> after hydration and
+     form controls don't inherit fonts by default — pin them to the Khmer stack. */
+  input,
+  textarea,
+  select,
+  button,
+  [data-radix-popper-content-wrapper] {
+    font-family: var(--font-sans);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Khmer has no letter case, and letter-spacing breaks its stacked clusters,
+   so labels rely on weight and colour instead of uppercase + tracking. */
+@utility label-caps {
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+@utility label-badge {
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 700;
+  letter-spacing: 0;
+}

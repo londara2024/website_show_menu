@@ -1,0 +1,65 @@
+# Backend stack: PostgreSQL + Spring Boot API.
+#   cp .env.example .env   # then fill in the secrets
+#   docker compose up -d --build
+# API: http://localhost:8080   Health: http://localhost:8080/actuator/health   Swagger: http://localhost:8080/swagger-ui.html
+#
+# Creates the shared "coffeeshop" network; ../frontend/docker-compose.yml joins it
+# and reaches this API at http://backend:8080. Start this stack first.
+
+name: coffeeshop-backend
+
+services:
+  db:
+    # PostgreSQL 18 keeps its data under /var/lib/postgresql/18/... — mount the parent dir.
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: coffeeshop
+      POSTGRES_USER: coffeeshop
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - pgdata18:/var/lib/postgresql
+    ports:
+      # Published (localhost only) for running the API outside Docker: ./mvnw spring-boot:run
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coffeeshop -d coffeeshop"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: .
+    image: coffeeshop-backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/coffeeshop
+      DB_USER: coffeeshop
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_TTL: ${JWT_TTL:-8h}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
+      CORS_ALLOWED_ORIGINS: ${PUBLIC_URL:-http://localhost:3000}
+      # Swagger UI at /swagger-ui.html and the spec at /v3/api-docs. Set false to hide them.
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      UPLOAD_DIR: /app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Uploaded product images (POST /api/admin/uploads/images)
+      - uploads:/app/uploads
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    restart: unless-stopped
+
+networks:
+  default:
+    name: coffeeshop
+
+volumes:
+  # PostgreSQL 18 data. (The old PostgreSQL 16 volume "coffeeshop-backend_pgdata" is no
+  # longer used; it was migrated with pg_dump/pg_restore and can be removed once you're happy.)
+  pgdata18:
+  uploads:

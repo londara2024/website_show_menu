@@ -1,0 +1,19 @@
+# dependencies & build output (rebuilt inside the image)
+node_modules
+.next
+.next-verify
+out
+*.tsbuildinfo
+next-env.d.ts
+
+
+# local / tooling
+.git
+.gitignore
+.vscode
+.idea
+.env*
+npm-debug.log*
+Dockerfile
+docker-compose.yml
+.dockerignore

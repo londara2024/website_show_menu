@@ -1,0 +1,28 @@
+# Website (Next.js). Needs the API from ../backend running first:
+#   (cd ../backend && docker compose up -d --build)
+#   docker compose up -d --build
+# Website: http://localhost:3000   Admin: http://localhost:3000/admin
+
+name: coffeeshop-frontend
+
+services:
+  web:
+    build: .
+    image: coffeeshop-web
+    environment:
+      # Server-side only: the browser never calls the API directly.
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
+      # Session cookie is Secure by default; browsers accept that on http://localhost.
+      # Set COOKIE_SECURE=false only for plain-HTTP access from another host (e.g. a LAN IP).
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      # Address the QR code opens (/admin/qr). Empty = the address the site is served from.
+      SITE_URL: ${SITE_URL:-}
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped
+
+networks:
+  default:
+    # Created by ../backend/docker-compose.yml
+    name: coffeeshop
+    external: true
